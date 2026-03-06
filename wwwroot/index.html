@@ -560,12 +560,17 @@
 
         // Сохранить клиента
         async function saveCustomer() {
+            // Собираем данные из формы
             const customerData = {
-                customerId: editingCustomerId,
                 firstName: document.getElementById('customerName').value,
                 email: document.getElementById('customerEmail').value,
                 address: document.getElementById('customerAddress').value
             };
+
+            // Если редактируем - добавляем ID
+            if (editingCustomerId) {
+                customerData.customerId = editingCustomerId;
+            }
 
             if (!customerData.firstName || !customerData.email) {
                 alert('Имя и email обязательны для заполнения');
@@ -575,6 +580,8 @@
             try {
                 const url = editingCustomerId ? `/api/customer/${editingCustomerId}` : '/api/customer';
                 const method = editingCustomerId ? 'PUT' : 'POST';
+
+                console.log('Отправляемые данные:', customerData);
 
                 const response = await fetch(url, {
                     method: method,
@@ -589,10 +596,25 @@
                     closeModal();
                     loadCustomers();
                 } else {
-                    const error = await response.json();
-                    alert(error.message || 'Ошибка при сохранении');
+                    const errorData = await response.json();
+                    console.error('Ошибка от сервера:', errorData);
+                    
+                    // Показываем понятное сообщение об ошибке
+                    let errorMessage = 'Ошибка при сохранении';
+                    if (errorData.errors) {
+                        // Если есть детальные ошибки валидации
+                        const firstError = Object.values(errorData.errors)[0];
+                        if (firstError && firstError.length > 0) {
+                            errorMessage = firstError[0];
+                        }
+                    } else if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                    
+                    alert(errorMessage);
                 }
             } catch (error) {
+                console.error('Ошибка соединения:', error);
                 alert('Ошибка соединения');
             }
         }

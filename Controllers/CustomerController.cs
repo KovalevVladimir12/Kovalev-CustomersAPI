@@ -66,18 +66,41 @@ public class CustomerController : ControllerBase
                 return BadRequest(new { message = "Имя обязательно для заполнения" });
             }
 
+            if (string.IsNullOrEmpty(customer.Email))
+            {
+                return BadRequest(new { message = "Email обязателен для заполнения" });
+            }
+
             // Устанавливаем ID = 0 для автоинкремента
             customer.CustomerId = 0;
-
-            // Очищаем поля, которых нет в БД
-            customer.LastName = null;
-            customer.Phone = null;
-            customer.CreatedAt = default;
 
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetCustomer), new { id = customer.CustomerId }, customer);
+        }
+        catch (DbUpdateException ex)
+        {
+            // Получаем внутреннее исключение
+            var innerException = ex.InnerException;
+            var errorMessage = "Ошибка базы данных: ";
+
+            if (innerException != null)
+            {
+                errorMessage += innerException.Message;
+
+                // Для PostgreSQL покажем более детально
+                if (innerException is Npgsql.PostgresException pgEx)
+                {
+                    errorMessage = $"PostgreSQL Error: {pgEx.MessageText} (Code: {pgEx.SqlState})";
+                }
+            }
+            else
+            {
+                errorMessage += ex.Message;
+            }
+
+            return StatusCode(500, new { message = errorMessage });
         }
         catch (Exception ex)
         {
@@ -102,11 +125,10 @@ public class CustomerController : ControllerBase
                 return NotFound(new { message = "Клиент не найден" });
             }
 
-            // Обновляем только существующие поля
+            // Обновляем поля
             existingCustomer.FirstName = customer.FirstName;
             existingCustomer.Email = customer.Email;
-            // В таблице нет поля Address, но если хотите использовать - раскомментируйте:
-            // existingCustomer.Address = customer.Address;
+            existingCustomer.Address = customer.Address;
 
             await _context.SaveChangesAsync();
 

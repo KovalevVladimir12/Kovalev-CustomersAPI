@@ -10,10 +10,10 @@ public class Customer
     [Column("id")]
     public int CustomerId { get; set; }
 
-    [Column("name")]
+    [Column("name")]  
     public string? FirstName { get; set; }
 
-    [NotMapped]  
+    [NotMapped]
     public string? LastName { get; set; }
 
     [Column("email")]
@@ -22,9 +22,9 @@ public class Customer
     [Column("address")]  
     public string? Address { get; set; }
 
-    [NotMapped]  
+    [NotMapped]
     public string? Phone { get; set; }
 
-    [NotMapped]  
+    [NotMapped]
     public DateTime CreatedAt { get; set; }
 }
